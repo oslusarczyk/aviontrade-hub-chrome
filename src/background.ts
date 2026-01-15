@@ -2,7 +2,7 @@ import { Storage } from "@plasmohq/storage";
 
 const storage = new Storage();
 const DEFAULT_BACKEND_URL =
-  process.env.PLASMO_PUBLIC_BACKEND_URL || "http://localhost:4000/api/trades";
+  process.env.PLASMO_PUBLIC_BACKEND_URL || "http://localhost:3000/api/trades";
 
 async function sendTradepileToBackend(tradeEvent: any) {
   try {

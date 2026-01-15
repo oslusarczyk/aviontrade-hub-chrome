@@ -1,7 +1,7 @@
 {
-  "name": "aviontrade-hub",
+  "name": "aviontrade-hub-chrome",
   "version": "1.0.0",
-  "description": "Extension for AvionTrade",
+  "description": "Extension for AvionTrade Hub",
   "main": "index.js",
   "scripts": {
     "dev": "plasmo dev",
@@ -23,13 +23,17 @@
     "typescript": "^5.9.3"
   },
   "manifest": {
+    "key": "$CRX_PUBLIC_KEY",
     "host_permissions": [
-      "http://localhost:4000/*",
+      "http://localhost/*",
+      "$CLERK_FRONTEND_API/*",
+      "$PLASMO_PUBLIC_CLERK_SYNC_HOST/*",
       "*://*.ea.com/*",
       "*://*.easports.com/*"
     ],
     "permissions": [
-      "storage"
+      "storage",
+      "cookies"
     ]
   },
   "devDependencies": {
