@@ -1,0 +1,39 @@
+{
+  "name": "aviontrade-hub",
+  "version": "1.0.0",
+  "description": "Extension for AvionTrade",
+  "main": "index.js",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@clerk/chrome-extension": "^2.8.17",
+    "@plasmohq/messaging": "^0.7.2",
+    "@plasmohq/storage": "^1.15.0",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "plasmo": "^0.90.5",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  },
+  "manifest": {
+    "host_permissions": [
+      "http://localhost:4000/*",
+      "*://*.ea.com/*",
+      "*://*.easports.com/*"
+    ],
+    "permissions": [
+      "storage"
+    ]
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.33",
+    "@types/node": "^25.0.8"
+  }
+}
