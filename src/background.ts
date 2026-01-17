@@ -2,14 +2,14 @@ import { Storage } from "@plasmohq/storage";
 
 const storage = new Storage();
 const DEFAULT_BACKEND_URL =
-  process.env.PLASMO_PUBLIC_BACKEND_URL || "http://localhost:3000/api/trades";
+  process.env.PLASMO_PUBLIC_BACKEND_URL || "http://localhost:3000/api/";
 
 async function sendTradepileToBackend(tradeEvent: any) {
   try {
     // Get token from storage (set via Clerk auth in popup)
     const apiToken = await storage.get("apiToken");
 
-    const response = await fetch(DEFAULT_BACKEND_URL, {
+    const response = await fetch(DEFAULT_BACKEND_URL + '/send-tradepile', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

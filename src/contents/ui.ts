@@ -1,11 +1,9 @@
 import type { PlasmoCSConfig } from "plasmo";
-import { Storage } from "@plasmohq/storage";
+
 
 export const config: PlasmoCSConfig = {
   matches: ["*://*.ea.com/*", "*://*.easports.com/*"],
 };
-
-const storage = new Storage();
 
 const style = document.createElement("style");
 style.textContent = `
@@ -28,15 +26,18 @@ style.textContent = `
 document.head.appendChild(style);
 
 function saveTradepile(data: any) {
-  storage.set("tradepileData", data);
+  console.log("[Aviontrade Content] Saving tradepile to storage:", data);
+  chrome.storage.local.set({ tradepileData: data });
 }
 
 async function getSavedTradepile() {
-  return await storage.get("tradepileData");
+  const result = await chrome.storage.local.get("tradepileData");
+  return result.tradepileData;
 }
 
 async function sendTradepile() {
   const tradepile = await getSavedTradepile();
+  console.log("[Aviontrade Content] Sending tradepile to background:", tradepile);
   if (tradepile) {
     console.log("[Aviontrade Content] Sending tradepile to background...");
 
