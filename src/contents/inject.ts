@@ -38,6 +38,15 @@ XMLHttpRequest.prototype.send = function (body) {
         console.error("[Aviontrade Inject] XHR error:", e);
       }
     }
+
+    if (this._url && this._url.includes("usermassinfo")) {
+      try {
+        const data = JSON.parse(this.responseText);
+        window.postMessage({ type: "GET_CLUB_DATA", payload: data }, "*");
+      } catch (e) {
+        console.error("[Aviontrade Inject] XHR error:", e);
+      }
+    }
   });
 
   return ORIGINAL_SEND.call(this, body);
