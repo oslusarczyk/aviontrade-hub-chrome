@@ -81,9 +81,10 @@ async function mapTradepileItems(auctionInfo: any[]) {
       resourceId: item.itemData.resourceId,
       preferredPosition: item.itemData.preferredPosition,
       attributeArray: item.itemData.attributeArray,
-      buyNowPrice: item.buyNowPrice,
-      lastSalePrice: lastSalePrice,
+      buyPrice: item.buyNowPrice,
+      listPrice: lastSalePrice,
       personaId: personaId,
+      tradeStatus: item.tradeState,
     };
   });
 }
