@@ -99,7 +99,7 @@ async function mapSalesItems(auctionInfo: any[]) {
     return {
       tradeId: item.tradeId,
       resourceId: item.itemData.resourceId,
-      buyNowPrice: item.buyNowPrice,
+      buyNowPrice: item.currentBid,
       lastSalePrice: lastSalePrice,
       profitMade: profitMade,
       personaId: personaId,
@@ -128,6 +128,7 @@ async function logSales() {
       return;
     }
     const mappedSoldItems = await mapSalesItems(soldItems);
+    console.log("[Aviontrade Content] Logging sales to background:", mappedSoldItems);
     chrome.runtime.sendMessage(
       { type: "LOG_SALES", payload: mappedSoldItems },
     );
