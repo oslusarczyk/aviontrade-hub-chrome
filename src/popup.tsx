@@ -4,44 +4,36 @@ import {
   SignedOut,
   SignIn,
   UserButton,
-  useAuth, // Import this hook
+  useAuth,
 } from "@clerk/chrome-extension";
-import { Storage } from "@plasmohq/storage";
 import { useEffect } from "react";
 
-const storage = new Storage();
 const PUBLISHABLE_KEY =
   process.env.PLASMO_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_PLACEHOLDER";
 const SYNC_HOST = process.env.PLASMO_PUBLIC_CLERK_SYNC_HOST;
-const POPUP_URL = chrome.runtime.getURL("popup.html"); // Clean URL
+const POPUP_URL = chrome.runtime.getURL("popup.html");
 
-// 1. Restore this helper component
-function TokenSync() {
+ function TokenSync() {
   const { getToken, isSignedIn } = useAuth();
-
   useEffect(() => {
     const syncToken = async () => {
       if (isSignedIn) {
         try {
-          // Fetch the JWT from Clerk
           const token = await getToken();
           if (token) {
-            // Save it to Chrome Storage so background.ts can use it
-            await storage.set("apiToken", token);
-            console.log("Token synced to storage:", token);
+            await chrome.storage.local.set({ apiToken: token });
           }
         } catch (err) {
           console.error("Failed to sync token", err);
         }
       } else {
-        // Clear token on logout
-        await storage.remove("apiToken");
+        await chrome.storage.local.remove("apiToken");
       }
     };
     syncToken();
-  }, [getToken, isSignedIn]);
+  }, [isSignedIn]);
 
-  return null; // This component renders nothing visible
+  return null;
 }
 
 function Index() {
@@ -62,7 +54,6 @@ function Index() {
         }}
       >
         <SignedIn>
-          {/* 2. Add the component here so it runs when logged in */}
           <TokenSync />
 
           <div
@@ -75,7 +66,6 @@ function Index() {
             <UserButton />
           </div>
         </SignedIn>
-
         <SignedOut>
           <p>Loginnnn!</p>
           <SignIn routing="virtual" />

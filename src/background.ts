@@ -4,11 +4,16 @@ const storage = new Storage();
 const DEFAULT_BACKEND_URL =
   process.env.PLASMO_PUBLIC_BACKEND_URL || "http://localhost:3000/api/";
 
+  async function getApiToken() {
+    const apiToken = await chrome.storage.local.get("apiToken");
+    return apiToken.apiToken;
+  }
+
 async function sendTradepileToBackend(tradeEvent: any) {
   try {
     // Get token from storage (set via Clerk auth in popup)
-    const apiToken = await storage.get("apiToken");
-    console.log(apiToken);
+    const apiToken = await getApiToken();
+    console.log("token:",apiToken);
     const response = await fetch(DEFAULT_BACKEND_URL + '/send-tradepile', {
       method: "POST",
       headers: {
@@ -30,8 +35,8 @@ async function sendTradepileToBackend(tradeEvent: any) {
 
 async function logSalesToBackend(salesData: any) {
   try {
-    const apiToken = await storage.get("apiToken");
-    const response = await fetch(DEFAULT_BACKEND_URL + '/log-sales', {
+     const apiToken = await getApiToken();    
+     const response = await fetch(DEFAULT_BACKEND_URL + '/log-sales', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

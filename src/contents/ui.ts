@@ -108,8 +108,10 @@ async function mapSalesItems(auctionInfo: any[]) {
 }
 async function sendTradepile() {
   const auctionInfo = await getSavedTradepileAuctionInfo();
+  console.log(auctionInfo);
   if (auctionInfo) {
     const mappedItems = await mapTradepileItems(auctionInfo);
+    console.log(mappedItems);
     console.log("[Aviontrade Content] Sending tradepile to background:", mappedItems);
     chrome.runtime.sendMessage(
       { type: "SEND_TRADEPILE", payload: mappedItems },
@@ -124,7 +126,7 @@ async function logSales() {
   if (auctionInfo) {
     const soldItems = auctionInfo.filter((item: any) => item.tradeState === "closed");
     if (soldItems.length === 0) {
-      console.log("[Aviontrade Content] No sold items to log");
+      console.log("[Aviontrade Content] No solddd items to log");
       return;
     }
     const mappedSoldItems = await mapSalesItems(soldItems);
