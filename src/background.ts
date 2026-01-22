@@ -1,8 +1,35 @@
-import { Storage } from "@plasmohq/storage";
+import { createClerkClient } from "@clerk/chrome-extension/background";
 
-const storage = new Storage();
 const DEFAULT_BACKEND_URL =
   process.env.PLASMO_PUBLIC_BACKEND_URL || "http://localhost:3000/api/";
+
+const PUBLISHABLE_KEY =
+  process.env.PLASMO_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_PLACEHOLDER";
+
+async function syncToken() {
+  try {
+    const clerk = await createClerkClient({
+      publishableKey: PUBLISHABLE_KEY,
+    });
+
+    if (clerk.session) {
+      const token = await clerk.session.getToken();
+      console.log("token:",token);
+      if (token) {
+        await chrome.storage.local.set({ apiToken: token });
+        console.log("Token synced in background");
+      }
+    } else {
+      await chrome.storage.local.remove("apiToken");
+      console.log("No session, token removed");
+    }
+  } catch (err) {
+    console.error("Failed to sync token in background", err);
+  }
+}
+
+syncToken();
+
 
   async function getApiToken() {
     const apiToken = await chrome.storage.local.get("apiToken");
@@ -11,9 +38,8 @@ const DEFAULT_BACKEND_URL =
 
 async function sendTradepileToBackend(tradeEvent: any) {
   try {
-    // Get token from storage (set via Clerk auth in popup)
     const apiToken = await getApiToken();
-    console.log("token:",apiToken);
+    console.log("token tradepile reqqquest:",apiToken);
     const response = await fetch(DEFAULT_BACKEND_URL + '/send-tradepile', {
       method: "POST",
       headers: {
@@ -56,6 +82,10 @@ async function logSalesToBackend(salesData: any) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === "SYNC_TOKEN") {
+    syncToken();
+    return false;
+  }
   if (message?.type === "SEND_TRADEPILE" && message?.payload) {
     sendTradepileToBackend(message.payload)
       .then((result) => sendResponse(result))

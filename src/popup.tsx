@@ -13,28 +13,33 @@ const PUBLISHABLE_KEY =
 const SYNC_HOST = process.env.PLASMO_PUBLIC_CLERK_SYNC_HOST;
 const POPUP_URL = chrome.runtime.getURL("popup.html");
 
- function TokenSync() {
-  const { getToken, isSignedIn } = useAuth();
+function PopupContent() {
+  const { isSignedIn } = useAuth();
+
   useEffect(() => {
-    const syncToken = async () => {
-      if (isSignedIn) {
-        try {
-          const token = await getToken();
-          if (token) {
-            await chrome.storage.local.set({ apiToken: token });
-          }
-        } catch (err) {
-          console.error("Failed to sync token", err);
-        }
-      } else {
-        await chrome.storage.local.remove("apiToken");
-      }
-    };
-    syncToken();
+    chrome.runtime.sendMessage({ type: "SYNC_TOKEN" });
   }, [isSignedIn]);
 
-  return null;
+  return (
+    <div
+      style={{
+        width: 400,
+        padding: 16,
+        fontFamily: "sans-serif",
+        height: 200,
+      }}
+    >
+      <SignedIn>
+        <UserButton />
+      </SignedIn>
+      <SignedOut>
+        <p>Log in to continue</p>
+        <SignIn routing="virtual" />
+      </SignedOut>
+    </div>
+  );
 }
+
 
 function Index() {
   return (
@@ -45,32 +50,7 @@ function Index() {
       signUpFallbackRedirectUrl={POPUP_URL}
       syncHost={SYNC_HOST}
     >
-      <div
-        style={{
-          width: 400,
-          padding: 16,
-          fontFamily: "sans-serif",
-          height: 600,
-        }}
-      >
-        <SignedIn>
-          <TokenSync />
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <UserButton />
-          </div>
-        </SignedIn>
-        <SignedOut>
-          <p>Loginnnn!</p>
-          <SignIn routing="virtual" />
-        </SignedOut>
-      </div>
+      <PopupContent />
     </ClerkProvider>
   );
 }
