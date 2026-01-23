@@ -29,6 +29,19 @@ style.textContent = `
   `;
 document.head.appendChild(style);
 
+function roundToPriceIncrement(price: number): number {
+  
+  if (price < 10000) {
+    return Math.round(price / 100) * 100;
+  } else if (price < 50000) {
+    return Math.round(price / 250) * 250;
+  } else if (price < 100000) {
+    return Math.round(price / 500) * 500;
+  } else {
+    return Math.round(price / 1000) * 1000;
+  }
+}
+
 function saveTradepile(data: any) {
   console.log("[Aviontrade Content] Saving tradepile to storage:", data);
   chrome.storage.local.set({ tradepileData: data.auctionInfo});
@@ -94,7 +107,8 @@ async function mapSalesItems(auctionInfo: any[]) {
   return auctionInfo.map((item) => {
     const itemId = item.itemData.id;
     const cachedPrice = priceCache[itemId];
-    const lastSalePrice = cachedPrice ?? item.itemData.lastSalePrice;
+    let lastSalePrice = cachedPrice ?? item.itemData.lastSalePrice
+    lastSalePrice = (lastSalePrice > 0) ? lastSalePrice : roundToPriceIncrement(item.buyNowPrice * 0.8);
     const profitMade = lastSalePrice ? (item.buyNowPrice * 0.95 - lastSalePrice) : 0;
     return {
       tradeId: item.tradeId,
@@ -126,7 +140,7 @@ async function logSales() {
   if (auctionInfo) {
     const soldItems = auctionInfo.filter((item: any) => item.tradeState === "closed");
     if (soldItems.length === 0) {
-      console.log("[Aviontrade Content] No solddd items to log");
+      console.log("[Aviontrade Content] No sold items to log");
       return;
     }
     const mappedSoldItems = await mapSalesItems(soldItems);
