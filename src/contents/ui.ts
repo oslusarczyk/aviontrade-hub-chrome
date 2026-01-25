@@ -5,6 +5,11 @@ export const config: PlasmoCSConfig = {
   matches: ["*://*.ea.com/*", "*://*.easports.com/*"],
 };
 
+interface ClubInfo {
+  clubData: number;
+  clubName: string;
+}
+
 
 const style = document.createElement("style");
 style.textContent = `
@@ -47,9 +52,32 @@ function saveTradepile(data: any) {
   chrome.storage.local.set({ tradepileData: data.auctionInfo});
 }
 
-function saveClubData(data: any) {
-  chrome.storage.local.set({ clubData: data.userInfo.personaId });
+async function saveClubData(data: any) {
+  const clubInfo = {
+    clubData: data.userInfo.personaId,
+    clubName: data.userInfo.clubName,
+  };
+  await chrome.storage.local.set({ clubInfo });
+  
+  console.log("[Aviontrade Content] Sending club data to background:", clubInfo);
+  chrome.runtime.sendMessage(
+    { type: "SEND_CLUB_DATA", payload: clubInfo },
+    async (response) => {
+      if (response?.success) {
+        const result = await chrome.storage.local.get("clubDataSent");
+        const sentPersonaIds = (result.clubDataSent as string[]) || [];
+        sentPersonaIds.push(clubInfo.clubData);
+        await chrome.storage.local.set({ clubDataSent: sentPersonaIds });
+        console.log("[Aviontrade Content] Club data sent successfully");
+      }
+      else {
+        console.log("[Aviontrade Content] Club data sending failed:", response?.error);
+      }
+    }
+  );
 }
+
+
 
 async function getSavedTradepileAuctionInfo() {
   const result = await chrome.storage.local.get("tradepileData");
@@ -72,12 +100,11 @@ async function cachePurchasePrices(auctionInfo: any[]) {
 
 async function getMappingContext() {
   const [clubResult, cacheResult] = await Promise.all([
-    chrome.storage.local.get("clubData"),
+    chrome.storage.local.get("clubInfo") as Promise<{ clubInfo: ClubInfo }>,
     chrome.storage.local.get("purchasePriceCache"),
   ]);
-  
   return {
-    personaId: clubResult.clubData,
+    personaId: clubResult.clubInfo.clubData,
     priceCache: (cacheResult.purchasePriceCache as Record<number, number>) || {},
   };
 }
@@ -187,7 +214,7 @@ window.addEventListener("load", () => {
   observer.observe(document.body, { childList: true, subtree: true });
 });
 
-window.addEventListener("message", (event) => {
+window.addEventListener("message", async (event) => {
   const { type, payload } = event.data || {};
 
   if (type === "TRADEPILE_DATA" && payload) {
@@ -198,7 +225,14 @@ window.addEventListener("message", (event) => {
 
   if (type === "GET_CLUB_DATA" && payload) {
     console.log("[Aviontrade Content] Received club data:", payload);
-    saveClubData(payload);
+        const personaId = payload.userInfo.personaId;
+        const result = await chrome.storage.local.get("clubDataSent");
+        const sentPersonaIds = (result.clubDataSent as string[]) || [];
+        if (!sentPersonaIds.includes(personaId)) {
+          await saveClubData(payload);
+        } else {
+          console.log("[Aviontrade Content] Club data already sent for this personaId, skipping");
+        }
   }
 });
 

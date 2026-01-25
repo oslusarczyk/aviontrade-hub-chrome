@@ -6,6 +6,11 @@ const DEFAULT_BACKEND_URL =
 const PUBLISHABLE_KEY =
   process.env.PLASMO_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_PLACEHOLDER";
 
+
+interface UserInfo {
+  apiToken?: string;
+}
+
 async function syncToken() {
   try {
     const clerk = await createClerkClient({
@@ -14,14 +19,11 @@ async function syncToken() {
 
     if (clerk.session) {
       const token = await clerk.session.getToken();
-      console.log("token:",token);
       if (token) {
-        await chrome.storage.local.set({ apiToken: token });
-        console.log("Token synced in background");
+        await chrome.storage.local.set({userInfo: {apiToken: token }});
       }
     } else {
-      await chrome.storage.local.remove("apiToken");
-      console.log("No session, token removed");
+      await chrome.storage.local.remove("userInfo");
     }
   } catch (err) {
     console.error("Failed to sync token in background", err);
@@ -29,17 +31,19 @@ async function syncToken() {
 }
 
 syncToken();
+setInterval(syncToken, 2000);
 
 
   async function getApiToken() {
-    const apiToken = await chrome.storage.local.get("apiToken");
-    return apiToken.apiToken;
+    const userInfoResult = await chrome.storage.local.get("userInfo");
+    const userInfo = userInfoResult.userInfo as UserInfo;
+    return userInfo.apiToken;
   }
+  
 
 async function sendTradepileToBackend(tradeEvent: any) {
   try {
     const apiToken = await getApiToken();
-    console.log("token tradepile reqqquest:",apiToken);
     const response = await fetch(DEFAULT_BACKEND_URL + '/send-tradepile', {
       method: "POST",
       headers: {
@@ -81,6 +85,28 @@ async function logSalesToBackend(salesData: any) {
   }
 }
 
+async function sendClubDataToBackend(clubData: any) {
+  try {
+    const apiToken = await getApiToken();
+    const response = await fetch(DEFAULT_BACKEND_URL + '/add-club', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(apiToken ? { Authorization: `Bearer ${apiToken}` } : {}),
+      },
+      body: JSON.stringify(clubData),
+    });
+
+    if (response.ok) {
+      return { success: true };
+    } else {
+      return { success: false, error: `Backend error: ${response.status}` };
+    }
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "SYNC_TOKEN") {
     syncToken();
@@ -88,6 +114,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message?.type === "SEND_TRADEPILE" && message?.payload) {
     sendTradepileToBackend(message.payload)
+      .then((result) => sendResponse(result))
+      .catch((error) => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+
+  if (message?.type === "SEND_CLUB_DATA" && message?.payload) {
+    sendClubDataToBackend(message.payload)
       .then((result) => sendResponse(result))
       .catch((error) => sendResponse({ success: false, error: error.message }));
     return true;
