@@ -142,7 +142,7 @@ async function mapSalesItems(auctionInfo: any[]) {
       resourceId: item.itemData.resourceId,
       buyNowPrice: item.currentBid,
       lastSalePrice: lastSalePrice,
-      profitMade: profitMade,
+      profitMade: Math.round(profitMade),
       personaId: personaId,
     };
   });
