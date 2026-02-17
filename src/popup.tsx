@@ -13,7 +13,7 @@ const PUBLISHABLE_KEY =
 const SYNC_HOST = process.env.PLASMO_PUBLIC_CLERK_SYNC_HOST;
 const POPUP_URL = chrome.runtime.getURL("popup.html");
 
-
+import "./style.css"
 
 function PopupContent() {
   const { isSignedIn } = useAuth();
@@ -30,90 +30,66 @@ function PopupContent() {
   }, [isSignedIn]);
 
   return (
-    // <div className="bg-gray-900 text-blue">
-    //   <h1 className="text-2xl font-bold">AvionTrade Hssub</h1>
-    // </div>
-    <div
-      style={{
-        width: 400,
-        height: 600,
-        display: "flex",
-        flexDirection: "column",
-        backgroundColor: "oklch(20.5% 0 0)",
-        color: "#fff",
-        fontFamily: "Segoe UI, sans-serif",
-      }}
-    >
-      <div style={{ padding: "8px 10px" }}>
+    <div className="w-[400px] h-[300px] flex flex-col bg-neutral-900 text-white overflow-hidden">
+      <div className="p-2 border-b border-neutral-700/50 flex-shrink-0">
         <SignedOut>
-          <p style={{ margin: 0 }}>Log in to continue</p>
+          <p className="m-0 text-sm text-neutral-400">Log in to continue</p>
           <SignIn routing="virtual" />
         </SignedOut>
         <SignedIn>
           <UserButton />
-          <div
-            style={{
-              flex: 1,
-              padding: "8px",
-            }}
-          >
-            {players && players.length > 0 ? (
-              players.map((player) => (
-                <div
-                  key={player.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "10px",
-                    fontSize: "20px",
-                    marginBottom: "6px",
-                    backgroundColor: "oklch(37.1% 0 0) opacity(0.1)",
-                    borderRadius: "4px",
-                    border: "1px solid #00ff00",
-                  }}
-                >
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                      <span>{player.name}</span>
-                      <span style={{ fontSize: "11px", backgroundColor: "oklch(72.3% 0.219 149.579) opacity(0.2)", borderRadius: "4px", padding: "4px 6px" }}>
-                        {player.rating}
-                      </span>
-                      <span style={{ fontSize: "11px", backgroundColor: "oklch(43.9% 0 0) opacity(0.4)", borderRadius: "4px", padding: "4px 6px" }}>
-                        {player.position}
-                      </span>
-                    </div>
-                    {player.price && <div style={{ fontSize: "12px", color: "#aaa" }}>{player.price}</div>}
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      deletePlayer(player.id);
-                    }}
-                    style={{
-                      width: "20px",
-                      height: "20px",
-                      backgroundColor: "#ff0000",
-                      color: "white",
-                      border: "none",
-                      cursor: "pointer",
-                      fontSize: "16px",
-                      lineHeight: "1",
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))
-            ) : (
-              <div style={{ padding: "40px 20px", textAlign: "center", color: "#aaa" }}>
-                No players found
-              </div>
-            )}
-          </div>
         </SignedIn>
       </div>
 
-
+      <div
+        className={`flex-1 p-2 ${players && players.length > 3 ? "overflow-y-auto" : "overflow-visible"}`}
+      >
+        <SignedIn>
+          {players && players.length > 0 ? (
+            players.map((player) => (
+              <div
+                key={player.id}
+                className="flex items-center justify-between p-3 mb-1.5 bg-neutral-700/30 rounded-lg border border-emerald-500/50 hover:border-emerald-500/70 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                    <span className="text-sm font-semibold text-neutral-200 truncate">
+                      {player.name || "Unknown"}
+                    </span>
+                    {player.rating && (
+                      <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs font-bold rounded border border-emerald-500/30 shrink-0">
+                        {player.rating}
+                      </span>
+                    )}
+                    {player.position && (
+                      <span className="px-1.5 py-0.5 bg-neutral-600/50 text-neutral-300 text-xs font-medium rounded border border-neutral-600/50 shrink-0">
+                        {player.position}
+                      </span>
+                    )}
+                  </div>
+                  {player.price && (
+                    <div className="text-xs text-neutral-400">{player.price}</div>
+                  )}
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deletePlayer(player.id);
+                  }}
+                  className="w-5 h-5 bg-red-500 hover:bg-red-600 text-white border-none cursor-pointer text-base leading-none flex items-center justify-center rounded transition-colors ml-3 flex-shrink-0"
+                  title="Delete player"
+                >
+                  ×
+                </button>
+              </div>
+            ))
+          ) : (
+            <div className="py-10 px-5 text-center text-neutral-400">
+              No players found
+            </div>
+          )}
+        </SignedIn>
+      </div>
     </div>
   );
 }

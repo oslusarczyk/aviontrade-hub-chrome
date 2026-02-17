@@ -64,25 +64,26 @@ async function sendTradepileToBackend(tradeEvent: any) {
 }
 
 async function logSalesToBackend(salesData: any) {
-  // try {
-    //  const apiToken = await getApiToken();    
-    //  const response = await fetch(DEFAULT_BACKEND_URL + '/log-sales', {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //     ...(apiToken ? { Authorization: `Bearer ${apiToken}` } : {}),
-    //   },
-    //   body: JSON.stringify(salesData),
-    // });
+  console.log("[Aviontrade Background] Logging sales ssso backend:", salesData);
+  try {
+     const apiToken = await getApiToken();    
+     const response = await fetch(DEFAULT_BACKEND_URL + '/log-sales', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(apiToken ? { Authorization: `Bearer ${apiToken}` } : {}),
+      },
+      body: JSON.stringify(salesData),
+    });
 
-  //   if (response.ok) {
-  //     return { success: true };
-  //   } else {
-  //     return { success: false, error: `Backend error: ${response.status}` };
-  //   }
-  // } catch (error: any) {
-  //   return { success: false, error: error.message };
-  // }
+    if (response.ok) {
+      return { success: true };
+    } else {
+      return { success: false, error: `Backend error: ${response.status}` };
+    }
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
 }
 
 async function sendClubDataToBackend(clubData: any) {
