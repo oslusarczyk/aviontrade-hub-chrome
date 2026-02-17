@@ -1,6 +1,7 @@
 import type { PlasmoCSConfig } from "plasmo";
+import { Storage } from "@plasmohq/storage";
 
-
+const storage = new Storage();
 export const config: PlasmoCSConfig = {
   matches: ["*://*.ea.com/*", "*://*.easports.com/*"],
 };
@@ -9,6 +10,7 @@ interface ClubInfo {
   clubData: number;
   clubName: string;
 }
+
 
 
 const style = document.createElement("style");
@@ -162,7 +164,29 @@ async function sendTradepile() {
   }
 }
 
+function getPlayers() {
+  const playersList = document.querySelectorAll(".ut-sectioned-item-list-view:nth-child(1) li.listFUTItem");
+  const players = Array.from(playersList).map((player, index) => {
+    const playerName = player.querySelector(".name")?.textContent;
+    const playerPrice = player.querySelector(".auctionValue:nth-child(2) .value")?.textContent;
+    const playerRating = player.querySelector(".rating")?.textContent;
+    const playerPosition = player.querySelector(".position")?.textContent;
+    return {
+      id: index,
+      name: playerName,
+      price: playerPrice,
+      rating: playerRating,
+      position: playerPosition,
+    };
+  });
+  storage.set("players", players);
+} 
+
+
 async function logSales() {
+  getPlayers();
+
+
   const auctionInfo = await getSavedTradepileAuctionInfo();
   if (auctionInfo) {
     const soldItems = auctionInfo.filter((item: any) => item.tradeState === "closed");
