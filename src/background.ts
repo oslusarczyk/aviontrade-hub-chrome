@@ -1,7 +1,7 @@
 import { createClerkClient } from "@clerk/chrome-extension/background";
 
 const DEFAULT_BACKEND_URL =
-  process.env.PLASMO_PUBLIC_BACKEND_URL || "http://localhost:3000/api/";
+  process.env.PLASMO_PUBLIC_BACKEND_URL || "http://localhost:3000/api";
 
 const PUBLISHABLE_KEY =
   process.env.PLASMO_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_PLACEHOLDER";
@@ -29,6 +29,17 @@ async function syncToken() {
     console.error("Failed to sync token in background", err);
   }
 }
+
+async function showAlert(message: string) {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab.id) {
+    chrome.tabs.sendMessage(tab.id, { 
+      type: "SHOW_NOTIFICATION", 
+      payload: { message } 
+    }).catch(() => {});
+  }
+}
+
 
 syncToken();
 setInterval(syncToken, 2000);
@@ -64,7 +75,7 @@ async function sendTradepileToBackend(tradeEvent: any) {
 }
 
 async function logSalesToBackend(salesData: any) {
-  console.log("[Aviontrade Background] Logging sales ssso backend:", salesData);
+  console.log("[Aviontrade Background] Logging sales to backend:", salesData);
   try {
      const apiToken = await getApiToken();    
      const response = await fetch(DEFAULT_BACKEND_URL + '/log-sales', {
@@ -77,12 +88,13 @@ async function logSalesToBackend(salesData: any) {
     });
 
     if (response.ok) {
-      return { success: true };
+      await showAlert("Sales logged successfully!");
     } else {
-      return { success: false, error: `Backend error: ${response.status}` };
+      const res = await response.json();
+      await showAlert(`Error: ${res.error}`);
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    await showAlert(`Error: ${error.message}`);
   }
 }
 

@@ -238,6 +238,14 @@ window.addEventListener("load", () => {
   observer.observe(document.body, { childList: true, subtree: true });
 });
 
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === "SHOW_NOTIFICATION" && message?.payload) {
+    alert(message.payload.message);
+    console.log("[Aviontrade Content] Showing notification:", message.payload.message);
+    return true;
+  }
+});
+
 window.addEventListener("message", async (event) => {
   const { type, payload } = event.data || {};
 
@@ -246,6 +254,11 @@ window.addEventListener("message", async (event) => {
     saveTradepile(payload);
     cachePurchasePrices(payload.auctionInfo);
   }
+
+  // if (type === "SHOW_NOTIFICATION" && payload) {
+  //   alert(payload.message);
+  //   console.log("[Aviontrade Content] Showing notification:", payload.message);
+  // }
 
   if (type === "GET_CLUB_DATA" && payload) {
     console.log("[Aviontrade Content] Received club data:", payload);
