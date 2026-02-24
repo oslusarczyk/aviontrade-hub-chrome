@@ -8,7 +8,19 @@ const DEFAULT_BACKEND_URL =
 const PUBLISHABLE_KEY =
   process.env.PLASMO_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_PLACEHOLDER";
 
-// const sendAlert = await storage.get("sendAlert") as boolean;
+interface Settings {
+  sendAlert: boolean;
+  pricePercentage: number;
+  autoClickList: boolean;
+  listKey: string;
+}
+
+const defaultSettings: Settings = {
+  sendAlert: false,
+  pricePercentage: 20,
+  autoClickList: false,
+  listKey: "l"
+};
 
 interface UserInfo {
   apiToken?: string;
@@ -24,7 +36,7 @@ async function syncToken() {
     if (clerk.session) {
       const token = await clerk.session.getToken();
       if (token) {
-        await chrome.storage.local.set({userInfo: {apiToken: token }});
+        await chrome.storage.local.set({ userInfo: { apiToken: token } });
       }
     } else {
       await chrome.storage.local.remove("userInfo");
@@ -35,19 +47,19 @@ async function syncToken() {
 }
 
 async function showAlert(message: string) {
-  const sendAlert = (await storage.get("sendAlert")) as boolean ?? false;
-  
+  const settings = (await storage.get("settings")) as Settings | null;
+  const sendAlert = settings?.sendAlert ?? defaultSettings.sendAlert;
+
   if (!sendAlert) {
     return;
   }
 
-  
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab.id) {
-    chrome.tabs.sendMessage(tab.id, { 
-      type: "SHOW_NOTIFICATION", 
-      payload: { message} 
-    }).catch(() => {});
+    chrome.tabs.sendMessage(tab.id, {
+      type: "SHOW_NOTIFICATION",
+      payload: { message }
+    }).catch(() => { });
   }
 }
 
@@ -56,12 +68,12 @@ syncToken();
 setInterval(syncToken, 2000);
 
 
-  async function getApiToken() {
-    const userInfoResult = await chrome.storage.local.get("userInfo");
-    const userInfo = userInfoResult.userInfo as UserInfo;
-    return userInfo.apiToken;
-  }
-  
+async function getApiToken() {
+  const userInfoResult = await chrome.storage.local.get("userInfo");
+  const userInfo = userInfoResult.userInfo as UserInfo;
+  return userInfo.apiToken;
+}
+
 
 async function sendTradepileToBackend(tradeEvent: any) {
   try {
@@ -88,8 +100,8 @@ async function sendTradepileToBackend(tradeEvent: any) {
 async function logSalesToBackend(salesData: any) {
   console.log("[Aviontrade Background] Logging sales to backend:", salesData);
   try {
-     const apiToken = await getApiToken();    
-     const response = await fetch(DEFAULT_BACKEND_URL + '/log-sales', {
+    const apiToken = await getApiToken();
+    const response = await fetch(DEFAULT_BACKEND_URL + '/log-sales', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -11,6 +11,20 @@ interface ClubInfo {
   clubName: string;
 }
 
+interface Settings {
+  sendAlert: boolean;
+  pricePercentage: number;
+  autoClickList: boolean;
+  listKey: string;
+}
+
+const defaultSettings: Settings = {
+  sendAlert: false,
+  pricePercentage: 20,
+  autoClickList: false,
+  listKey: "l"
+};
+
 
 
 const style = document.createElement("style");
@@ -36,12 +50,12 @@ style.textContent = `
   `;
 document.head.appendChild(style);
 
-// const sendAlert = await storage.get("sendAlert") as boolean;
-// console.log("[Aviontrade Content] Send alert:", sendAlert);
 
 function roundToPriceIncrement(price: number): number {
-  
-  if (price < 10000) {
+
+  if (price < 1000) {
+    return Math.round(price / 50) * 50;
+  } else if (price < 10000) {
     return Math.round(price / 100) * 100;
   } else if (price < 50000) {
     return Math.round(price / 250) * 250;
@@ -52,9 +66,71 @@ function roundToPriceIncrement(price: number): number {
   }
 }
 
+// Simulate click event
+function tapElement(element: HTMLElement) {
+  sendTouchEvent(element, 'touchstart');
+  sendTouchEvent(element, 'touchend');
+}
+function sendTouchEvent(element, eventType) {
+  const touchObj = new Touch({
+    identifier: Math.random(),
+    target: element,
+    clientX: 0,
+    clientY: 0,
+    radiusX: 2.5,
+    radiusY: 2.5,
+    rotationAngle: 10,
+    force: 0.5
+  });
+
+  const touchEvent = new TouchEvent(eventType, {
+    cancelable: true,
+    bubbles: true,
+    touches: [touchObj],
+    targetTouches: [touchObj],
+    changedTouches: [touchObj],
+    shiftKey: true
+  });
+  element.dispatchEvent(touchEvent);
+}
+
+
+
+async function listCard() {
+  const cardPanel = document.querySelector(".DetailPanel");
+  const boughtPrice = parseFloat(cardPanel.querySelector(".boughtPriceValue")?.textContent.replace(/,/g, ""));
+  const binPanel = cardPanel.querySelector(".panelActionRow:nth-child(2)");
+  const binButton = binPanel.querySelector(".increment-value") as HTMLButtonElement;
+  const binInput = binPanel.querySelector("input") as HTMLInputElement;
+  const bidPanel = cardPanel.querySelector(".panelActionRow:nth-child(3)");
+  const bidInput = bidPanel.querySelector("input") as HTMLInputElement;
+  const bidButton = bidPanel.querySelector(".increment-value") as HTMLButtonElement;
+  const listButton = cardPanel.querySelector(".panelActions button.primary") as HTMLButtonElement;
+
+  if (binInput) {
+    const settings = (await storage.get("settings")) as Settings | null;
+    const pricePercentage = settings?.pricePercentage ?? defaultSettings.pricePercentage;
+    const autoClickList = settings?.autoClickList ?? defaultSettings.autoClickList;
+
+    const multiplier = 1 + (pricePercentage / 100);
+    const calculatedPrice = boughtPrice * multiplier;
+    const roundPrice = roundToPriceIncrement(calculatedPrice);
+
+    binInput.value = String(roundPrice);
+    bidInput.value = String(roundPrice);
+    tapElement(binButton);
+
+    if (autoClickList && listButton) {
+      tapElement(listButton);
+    }
+  }
+
+}
+
+
 function saveTradepile(data: any) {
   console.log("[Aviontrade Content] Saving tradepile to storage:", data);
-  chrome.storage.local.set({ tradepileData: data.auctionInfo});
+  chrome.storage.local.set({ tradepileData: data.auctionInfo });
 }
 
 async function saveClubData(data: any) {
@@ -63,7 +139,7 @@ async function saveClubData(data: any) {
     clubName: data.userInfo.clubName,
   };
   await chrome.storage.local.set({ clubInfo });
-  
+
   console.log("[Aviontrade Content] Sending club data to background:", clubInfo);
   chrome.runtime.sendMessage(
     { type: "SEND_CLUB_DATA", payload: clubInfo },
@@ -183,7 +259,7 @@ function getPlayers() {
     };
   });
   storage.set("players", players);
-} 
+}
 
 
 async function logSales() {
@@ -223,6 +299,16 @@ function createLogSalesButton() {
   return btn;
 }
 
+window.addEventListener("keydown", async (event) => {
+  const settings = (await storage.get("settings")) as Settings | null;
+  const listKey = settings?.listKey ?? defaultSettings.listKey;
+
+  if (event.key.toLowerCase() === listKey.toLowerCase()) {
+    listCard();
+  }
+});
+
+
 function injectButtons() {
   const header = document.querySelector(
     ".ut-transfer-list-view .ut-section-header-view"
@@ -259,14 +345,14 @@ window.addEventListener("message", async (event) => {
   }
   if (type === "GET_CLUB_DATA" && payload) {
     console.log("[Aviontrade Content] Received club data:", payload);
-        const personaId = payload.userInfo.personaId;
-        const result = await chrome.storage.local.get("clubDataSent");
-        const sentPersonaIds = (result.clubDataSent as string[]) || [];
-        if (!sentPersonaIds.includes(personaId)) {
-          await saveClubData(payload);
-        } else {
-          console.log("[Aviontrade Content] Club data already sent for this personaId, skipping");
-        }
+    const personaId = payload.userInfo.personaId;
+    const result = await chrome.storage.local.get("clubDataSent");
+    const sentPersonaIds = (result.clubDataSent as string[]) || [];
+    if (!sentPersonaIds.includes(personaId)) {
+      await saveClubData(payload);
+    } else {
+      console.log("[Aviontrade Content] Club data already sent for this personaId, skipping");
+    }
   }
 });
 
