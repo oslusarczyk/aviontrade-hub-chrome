@@ -36,6 +36,9 @@ style.textContent = `
   `;
 document.head.appendChild(style);
 
+// const sendAlert = await storage.get("sendAlert") as boolean;
+// console.log("[Aviontrade Content] Send alert:", sendAlert);
+
 function roundToPriceIncrement(price: number): number {
   
   if (price < 10000) {
@@ -254,12 +257,6 @@ window.addEventListener("message", async (event) => {
     saveTradepile(payload);
     cachePurchasePrices(payload.auctionInfo);
   }
-
-  // if (type === "SHOW_NOTIFICATION" && payload) {
-  //   alert(payload.message);
-  //   console.log("[Aviontrade Content] Showing notification:", payload.message);
-  // }
-
   if (type === "GET_CLUB_DATA" && payload) {
     console.log("[Aviontrade Content] Received club data:", payload);
         const personaId = payload.userInfo.personaId;

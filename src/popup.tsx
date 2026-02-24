@@ -6,8 +6,10 @@ import {
   UserButton,
   useAuth,
 } from "@clerk/chrome-extension";
+import { Settings } from 'lucide-react';
 import { useEffect } from "react";
 import { useStorage } from "@plasmohq/storage/hook"
+
 const PUBLISHABLE_KEY =
   process.env.PLASMO_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_PLACEHOLDER";
 const SYNC_HOST = process.env.PLASMO_PUBLIC_CLERK_SYNC_HOST;
@@ -31,13 +33,16 @@ function PopupContent() {
 
   return (
     <div className="w-[400px] h-[300px] flex flex-col bg-neutral-900 text-white overflow-hidden">
-      <div className="p-2 border-b border-neutral-700/50 flex-shrink-0">
+      <div className="p-2 border-b border-neutral-700/50 flex-shrink-0 flex items-center justify-between">
         <SignedOut>
           <p className="m-0 text-sm text-neutral-400">Log in to continue</p>
           <SignIn routing="virtual" />
         </SignedOut>
         <SignedIn>
           <UserButton />
+          <button onClick={() => chrome.runtime.openOptionsPage()} className="text-sm text-neutral-400 hover:text-neutral-300 transition-colors">
+            <Settings className="w-6 h-6" />
+          </button>
         </SignedIn>
       </div>
 
@@ -104,6 +109,7 @@ function Index() {
       signUpFallbackRedirectUrl={POPUP_URL}
       syncHost={SYNC_HOST}
     >
+
       <PopupContent />
     </ClerkProvider>
   );

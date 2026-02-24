@@ -1,4 +1,6 @@
 import { createClerkClient } from "@clerk/chrome-extension/background";
+import { Storage } from "@plasmohq/storage";
+const storage = new Storage();
 
 const DEFAULT_BACKEND_URL =
   process.env.PLASMO_PUBLIC_BACKEND_URL || "http://localhost:3000/api";
@@ -6,10 +8,12 @@ const DEFAULT_BACKEND_URL =
 const PUBLISHABLE_KEY =
   process.env.PLASMO_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_PLACEHOLDER";
 
+// const sendAlert = await storage.get("sendAlert") as boolean;
 
 interface UserInfo {
   apiToken?: string;
 }
+
 
 async function syncToken() {
   try {
@@ -31,11 +35,18 @@ async function syncToken() {
 }
 
 async function showAlert(message: string) {
+  const sendAlert = (await storage.get("sendAlert")) as boolean ?? false;
+  
+  if (!sendAlert) {
+    return;
+  }
+
+  
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab.id) {
     chrome.tabs.sendMessage(tab.id, { 
       type: "SHOW_NOTIFICATION", 
-      payload: { message } 
+      payload: { message} 
     }).catch(() => {});
   }
 }
